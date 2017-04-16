@@ -1,0 +1,8 @@
+* 说明
+plist和图集应该在同一个目录下。
+目前近支持的plist format是0和2的图集拆解
+* 使用
+#+begin_src shell options
+  python unpack_plist.py plist_file #plist_file不包含.plist
+#+end_src
+
