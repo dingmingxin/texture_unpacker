@@ -116,10 +116,8 @@ def gen_png_from_plist(plist_filename, png_filename):
     if ( plist_format == 0):
         images_info_dict = do_unpack_format_0(plist_dict)
     elif (plist_format == 1):
-        print("plist format not supported 1")
-        #images_info_dict = do_unpack_format_1(plist_dict)
+        images_info_dict = do_unpack_format_2(plist_dict)
     elif (plist_format == 2):
-        print(file_path)
         images_info_dict = do_unpack_format_2(plist_dict)
     elif (plist_format == 3):
         print("plist format not supported 3")
