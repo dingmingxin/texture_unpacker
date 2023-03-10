@@ -67,10 +67,10 @@ def do_unpack_format_2(plist_dict):
                y+height)
         sourceSize = (int(sourceSize[0]), int(sourceSize[1]))
         result_box = (
-                (sourceSize[0] - width)/2,
-                (sourceSize[1] - height)/2,
-                (sourceSize[0] + width)/2,
-                (sourceSize[1] + height)/2,
+                int((sourceSize[0] - width)/2),
+                int((sourceSize[1] - height)/2),
+                int((sourceSize[0] + width)/2),
+                int((sourceSize[1] + height)/2),
                 )
         data = {
                 "box": box,
@@ -81,6 +81,37 @@ def do_unpack_format_2(plist_dict):
         info[k] = data
     return info
 
+def do_unpack_format_3(plist_dict):
+    to_list = lambda x: x.replace('{','').replace('}','').split(',')
+    info = {}
+    for k,v in plist_dict['frames'].items():
+        box = to_list(v["textureRect"])
+        x = int(box[0])
+        y = int(box[1])
+        rotated = v["textureRotated"]
+        width = int(box[3] if rotated else box[2])
+        height = int(box[2] if rotated else box[3])
+
+        sourceSize = to_list(v["spriteSourceSize"])
+        box = (x,
+               y,
+               x+width,
+               y+height)
+        sourceSize = (int(sourceSize[0]), int(sourceSize[1]))
+        result_box = (
+                int((sourceSize[0] - width)/2),
+                int((sourceSize[1] - height)/2),
+                int((sourceSize[0] + width)/2),
+                int((sourceSize[1] + height)/2),
+                )
+        data = {
+                "box": box,
+                "size": sourceSize,
+                "result_box" : result_box,
+                "rotated" : v["textureRotated"]
+                }
+        info[k] = data
+    return info
 
 def save_image_file(result_image, file_path, image_name):
     if not os.path.isdir(file_path):
@@ -95,12 +126,12 @@ def do_crop_images(big_image, file_path, images_info_dict):
         rect_on_big = big_image.crop(v["box"])
         image_size = v["size"]
         result_image = Image.new('RGBA', image_size, (0,0,0,0))
-        if(v.has_key("result_box")):
+        if "result_box" in v:
             result_box = v["result_box"]
         else:
             result_box = (0,0, image_size[0], image_size[1])
         result_image.paste(rect_on_big, result_box, mask=0)
-        if v.has_key("rotated") and v["rotated"] == True:
+        if "rotated" in v and v["rotated"] == True:
             result_image = result_image.rotate(90)
         save_image_file(result_image, file_path, k)
 
@@ -120,8 +151,7 @@ def gen_png_from_plist(plist_filename, png_filename):
     elif (plist_format == 2):
         images_info_dict = do_unpack_format_2(plist_dict)
     elif (plist_format == 3):
-        print("plist format not supported 3")
-        #images_info_dict = do_unpack_format_3(plist_dict)
+        images_info_dict = do_unpack_format_3(plist_dict)
     else:
         print("plist format not supported")
 
@@ -132,8 +162,12 @@ def gen_png_from_plist(plist_filename, png_filename):
 if __name__ == '__main__':
     filename = sys.argv[1]
     plist_filename = filename + '.plist'
-    png_filename = filename + '.png'
-    if (os.path.exists(plist_filename) and os.path.exists(png_filename)):
-        gen_png_from_plist( plist_filename, png_filename )
+    image_filename = filename + '.webp'
+    image_filename_png = filename + '.png'
+    if os.path.exists(plist_filename):
+        if os.path.exists(image_filename):
+            gen_png_from_plist(plist_filename, image_filename)
+        if os.path.exists(image_filename_png):
+            gen_png_from_plist(plist_filename, image_filename_png)
     else:
-        print "make sure you have boith plist and png files in the same directory"
+        print("make sure you have boith plist and image files in the same directory")
